@@ -1,7 +1,11 @@
 import './globals.css';
 
 import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from '../providers/AuthProvider';
+// import { AuthProvider } from '../providers/AuthProvider';
+import UserProvider from '@/providers/UserProvider';
+import ModalProvider from '@/providers/ModalProvider';
+import SupabaseProvider from '@/providers/SupabaseProvider';
+import ToasterProvider from '@/providers/ToasterProvider';
 
 export default function RootLayout({
   children,
@@ -11,10 +15,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-black text-white">
-        <AuthProvider>
-          <Toaster position="top-center" />
-          {children}
-        </AuthProvider>
+        <ToasterProvider />
+        <SupabaseProvider>
+          <UserProvider>
+            <ModalProvider />
+            {children}
+          </UserProvider>
+        </SupabaseProvider>
       </body>
     </html>
   );
