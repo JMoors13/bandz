@@ -19,10 +19,11 @@ const AuthModal = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedRole, setSelectedRole] = useState<'artist' | 'listener'>(
-    'listener',
+  const [selectedRole, setSelectedRole] = useState<'artists' | 'listeners'>(
+    'listeners',
   );
   const [artistName, setArtistName] = useState('');
+  const [listenerName, setListenerName] = useState('');
   const [loading, setLoading] = useState(false);
 
   // useEffect(() => {
@@ -105,10 +106,30 @@ const AuthModal = () => {
         console.error('Profile insert failed:', profileError.message);
         toast.error('Failed to save profile.');
       } else {
-        toast.success('Account created! Check your email.');
-        router.refresh();
-        onClose();
+        // toast.success('Account created! Check your email.');
+        // router.refresh();
+        // onClose();
       }
+
+      // Insert into either artist or listener table
+      const table = selectedRole === 'artists' ? 'artists' : 'listeners';
+      const roleInsertData =
+        selectedRole === 'artists'
+          ? { id: data.user.id, artist_name: artistName }
+          : { id: data.user.id, display_name: listenerName };
+
+      const { error: roleError } = await supabase
+        .from(table)
+        .insert([roleInsertData]);
+
+      if (roleError) {
+        console.error(`Insert failed in ${table} table:`, roleError.message);
+        toast.error(`Failed to register in ${table} table.`);
+        setLoading(false);
+        return;
+      }
+      toast.success('Account created! Check your email.');
+      onClose();
     }
 
     setLoading(false);
@@ -127,65 +148,64 @@ const AuthModal = () => {
         <>
           <div className="flex justify-center mb-4 gap-4">
             <button
-              onClick={() => setSelectedRole('listener')}
+              onClick={() => setSelectedRole('listeners')}
               className={`px-4 py-2 rounded ${
-                selectedRole === 'listener'
-                  ? 'bg-blue-700 text-white'
-                  : 'bg-neutral-800 text-gray-300'
+                selectedRole === 'listeners'
+                  ? 'bg-blue-700 text-white '
+                  : 'bg-neutral-800 text-gray-300 hover:bg-neutral-700 cursor-pointer'
               }`}
             >
               Listener
             </button>
             <button
-              onClick={() => setSelectedRole('artist')}
+              onClick={() => setSelectedRole('artists')}
               className={`px-4 py-2 rounded ${
-                selectedRole === 'artist'
+                selectedRole === 'artists'
                   ? 'bg-blue-700 text-white'
-                  : 'bg-neutral-800 text-gray-300'
+                  : 'bg-neutral-800 text-gray-300 hover:bg-neutral-700 cursor-pointer'
               }`}
             >
               Artist
             </button>
           </div>
-
-          {selectedRole === 'artist' && (
-            <div className="mb-4">
-              <label className="block mb-1 text-sm text-neutral-400">
-                Artist Name
-              </label>
-              <input
-                type="text"
-                value={artistName}
-                onChange={(e) => setArtistName(e.target.value)}
-                placeholder="e.g. The Hot Funk Band"
-                className="w-full px-3 py-2 rounded border border-neutral-700 bg-neutral-900 text-white"
-              />
-            </div>
-          )}
         </>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
-          type="email"
-          placeholder="Email"
-          className="w-full px-3 py-2 rounded border border-neutral-700 bg-neutral-900 text-white"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          type="text"
+          value={selectedRole === 'artists' ? artistName : listenerName}
+          onChange={(e) =>
+            selectedRole === 'artists'
+              ? setArtistName(e.target.value)
+              : setListenerName(e.target.value)
+          }
+          placeholder={
+            selectedRole === 'artists'
+              ? 'e.g. The Hot Funk Band'
+              : 'e.g. Jane Doe'
+          }
+          className={`w-full px-3 py-2 rounded border border-neutral-700 bg-neutral-900 text-neutral-500`}
         />
 
         <input
+          type="email"
+          placeholder="Email"
+          className="w-full px-3 py-2 rounded border border-neutral-700 bg-neutral-900 text-neutral-500"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <input
           type="password"
           placeholder="Password"
-          className="w-full px-3 py-2 rounded border border-neutral-700 bg-neutral-900 text-white"
+          className="w-full px-3 py-2 rounded border border-neutral-700 bg-neutral-900 text-neutral-500"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-
         <button
           type="submit"
           disabled={loading}
-          className="w-full py-2 rounded bg-green-600 text-white hover:bg-green-700"
+          className="cursor-pointer w-full py-2 rounded bg-blue-700 text-white hover:bg-blue-900"
         >
           {loading
             ? 'Processing...'
@@ -200,7 +220,7 @@ const AuthModal = () => {
             Don't have an account?{' '}
             <button
               type="button"
-              className="text-green-500 underline hover:text-green-400"
+              className="cursor-pointer text-blue-700 underline hover:text-blue-700 "
               onClick={() => useAuthModal.getState().setView('sign_up')}
             >
               Sign up.
@@ -211,7 +231,7 @@ const AuthModal = () => {
             Already have an account?{' '}
             <button
               type="button"
-              className="text-green-500 underline hover:text-green-400"
+              className="text-blue-700 cursor-pointer underline hover:text-blue-700"
               onClick={() => useAuthModal.getState().setView('sign_in')}
             >
               Log in.

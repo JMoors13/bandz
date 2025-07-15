@@ -20,9 +20,10 @@ const Modal: React.FC<ModalProps> = ({
     <Dialog.Root open={isOpen} defaultOpen={isOpen} onOpenChange={onChange}>
       <Dialog.Portal>
         <Dialog.Overlay
+          onPointerDown={(e) => e.stopPropagation()}
           className="
                 bg-neutral-900/90
-                backdrop-blur-md
+                backdrop-blur-sm
                 fixed
                 inset-0
             "
@@ -87,6 +88,7 @@ const Modal: React.FC<ModalProps> = ({
                     justify-center
                     rounded-full
                     focus:outline-none
+                    cursor-pointer
                 "
             >
               <IoMdClose />
