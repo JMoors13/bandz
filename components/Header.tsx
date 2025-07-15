@@ -14,6 +14,7 @@ import { useUser } from '@/hooks/useUser';
 
 import Button from './Button';
 import useUploadModal from '@/hooks/useUploadModal';
+import { useEffect, useState } from 'react';
 
 interface HeaderProps {
   children: React.ReactNode;
@@ -26,12 +27,32 @@ const Header: React.FC<HeaderProps> = ({ children, className }) => {
   const uploadModal = useUploadModal();
   const { user } = useUser();
   const supabaseClient = useSupabaseClient();
+  const [isArtist, setIsArtist] = useState(false);
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      if (!user) return;
+      const { data, error } = await supabaseClient
+        .from('public_profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching role:', error.message);
+        return;
+      }
+
+      setIsArtist(data?.role === 'artists');
+    };
+
+    fetchRole();
+  }, [user, supabaseClient]);
 
   const onClick = () => {
     if (!user) {
       return authModal.onOpen();
     }
-
     return uploadModal.onOpen();
   };
 
@@ -68,53 +89,25 @@ const Header: React.FC<HeaderProps> = ({ children, className }) => {
         justify-between
         "
       >
-        {/* <div
-          className="
-            hidden
-            md:flex
-            gap-x-2
-            items-center
-            "
-        >
-          <button
-            onClick={() => router.back()}
-            className="
-              rounded-full
-              bg-black
-              flex
-              items-center
-              justify-center
-              hover:opacity-75
-              transition"
-          >
-            <RxCaretLeft className="text-white" size={35} />
-          </button>
-          <button
-            onClick={() => router.forward()}
-            className="
-              rounded-full
-              bg-black
-              flex
-              items-center
-              justify-center
-              hover:opacity-75
-              transition"
-          >
-            <RxCaretRight className="text-white" size={35} />
-          </button>
-        </div> */}
         <div>
-          <Button
-            onClick={onClick}
-            className="
+          {isArtist && user ? (
+            <>
+              {' '}
+              <Button
+                onClick={onClick}
+                className="
               text-black
               cursor-pointer
               px-6
               py-2
             "
-          >
-            Add Song
-          </Button>
+              >
+                Add Song
+              </Button>
+            </>
+          ) : (
+            <></>
+          )}
         </div>
         <div
           className="
@@ -139,21 +132,6 @@ const Header: React.FC<HeaderProps> = ({ children, className }) => {
           >
             <HiHome className="text-black" size={20} />
           </button>
-          {/* <button
-            onClick={() => router.push('/search')}
-            className="
-            rounded-full
-            p-2
-            bg-white
-            flex
-            items-center
-            justify-center
-            hover:opacity-75
-            transition
-            "
-          >
-            <BiSearch className="text-black" size={20} />
-          </button> */}
         </div>
         <div
           className="

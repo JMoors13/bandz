@@ -53,9 +53,6 @@ const UploadModal = () => {
 
       if (!imageFile || !songFile || !user) {
         toast.error('Missing fields');
-        console.log('image: ' + imageFile);
-        console.log('song: ' + songFile);
-        console.log('user: ' + user?.email);
         return;
       }
 
