@@ -13,6 +13,7 @@ import useAuthModal from '@/hooks/useAuthModal';
 import { useUser } from '@/hooks/useUser';
 
 import Button from './Button';
+import useUploadModal from '@/hooks/useUploadModal';
 
 interface HeaderProps {
   children: React.ReactNode;
@@ -22,9 +23,17 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ children, className }) => {
   const router = useRouter();
   const authModal = useAuthModal();
-
-  const supabaseClient = useSupabaseClient();
+  const uploadModal = useUploadModal();
   const { user } = useUser();
+  const supabaseClient = useSupabaseClient();
+
+  const onClick = () => {
+    if (!user) {
+      return authModal.onOpen();
+    }
+
+    return uploadModal.onOpen();
+  };
 
   const handleLogout = async () => {
     const { error } = await supabaseClient.auth.signOut();
@@ -94,6 +103,19 @@ const Header: React.FC<HeaderProps> = ({ children, className }) => {
             <RxCaretRight className="text-white" size={35} />
           </button>
         </div> */}
+        <div>
+          <Button
+            onClick={onClick}
+            className="
+              text-black
+              cursor-pointer
+              px-6
+              py-2
+            "
+          >
+            Add Song
+          </Button>
+        </div>
         <div
           className="
             flex
@@ -144,12 +166,12 @@ const Header: React.FC<HeaderProps> = ({ children, className }) => {
         >
           {user ? (
             <div className=" flex gap-x-4 items-center ">
-              <Button onClick={handleLogout} className="be-white px-6 py-2">
+              <Button onClick={handleLogout} className="bg-white px-6 py-2">
                 Logout
               </Button>
               <Button
                 // onClick={() => router.push('/account')}
-                className="bg-blue-700"
+                className="bg-white"
               >
                 <FaUserAlt />
               </Button>

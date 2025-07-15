@@ -26,35 +26,20 @@ const AuthModal = () => {
   const [listenerName, setListenerName] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // useEffect(() => {
-  //   if (session) {
-  //     const user = session.user;
+  useEffect(() => {
+    setEmail('');
+    setPassword('');
+    setArtistName('');
+    setListenerName('');
+    setSelectedRole('listeners');
+  }, [view]);
 
-  //     const profile: any = {
-  //       id: user.id,
-  //       email: user.email,
-  //       role: selectedRole,
-  //     };
-
-  //     // if (selectedRole === 'artist') {
-  //     //   profile.artist_name = artistName;
-  //     // }
-  //     // console.log(profile.artist_name);
-
-  //     supabase
-  //       .from('public_profiles')
-  //       .insert([profile])
-  //       .then(({ error }) => {
-  //         if (error) {
-  //           console.error('Profile insert failed:', error.message);
-  //           toast.error('Failed to create profile.');
-  //         }
-  //       });
-
-  //     router.refresh();
-  //     onClose();
-  //   }
-  // }, [session, selectedRole, artistName, supabase, router, onClose]);
+  useEffect(() => {
+    setArtistName('');
+    setListenerName('');
+    setEmail('');
+    setPassword('');
+  }, [selectedRole]);
 
   const onChange = (open: boolean) => {
     if (!open) onClose();
@@ -95,7 +80,6 @@ const AuthModal = () => {
         id: data.user.id,
         email,
         role: selectedRole,
-        // ...(selectedRole === 'artist' && { artist_name: artistName }),
       };
 
       const { error: profileError } = await supabase
@@ -106,9 +90,6 @@ const AuthModal = () => {
         console.error('Profile insert failed:', profileError.message);
         toast.error('Failed to save profile.');
       } else {
-        // toast.success('Account created! Check your email.');
-        // router.refresh();
-        // onClose();
       }
 
       // Insert into either artist or listener table
@@ -172,29 +153,33 @@ const AuthModal = () => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          value={selectedRole === 'artists' ? artistName : listenerName}
-          onChange={(e) =>
-            selectedRole === 'artists'
-              ? setArtistName(e.target.value)
-              : setListenerName(e.target.value)
-          }
-          placeholder={
-            selectedRole === 'artists'
-              ? 'e.g. The Hot Funk Band'
-              : 'e.g. Jane Doe'
-          }
-          className={`w-full px-3 py-2 rounded border border-neutral-700 bg-neutral-900 text-neutral-500`}
-        />
+        {/* Only show this input when signing up */}
+        {view === 'sign_up' && (
+          <input
+            type="text"
+            value={selectedRole === 'artists' ? artistName : listenerName}
+            onChange={(e) =>
+              selectedRole === 'artists'
+                ? setArtistName(e.target.value)
+                : setListenerName(e.target.value)
+            }
+            placeholder={
+              selectedRole === 'artists'
+                ? 'e.g. The Red Hot Chili Peppers'
+                : 'Username'
+            }
+            className="w-full px-3 py-2 rounded border border-neutral-700 bg-neutral-900 text-neutral-500"
+          />
+        )}
 
         <input
           type="email"
-          placeholder="Email"
+          placeholder="Email@email.com"
           className="w-full px-3 py-2 rounded border border-neutral-700 bg-neutral-900 text-neutral-500"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
+
         <input
           type="password"
           placeholder="Password"
@@ -202,6 +187,7 @@ const AuthModal = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+
         <button
           type="submit"
           disabled={loading}
@@ -214,6 +200,7 @@ const AuthModal = () => {
             : 'Sign Up'}
         </button>
       </form>
+
       <div className="mt-4 text-center text-sm text-neutral-400">
         {view === 'sign_in' ? (
           <>

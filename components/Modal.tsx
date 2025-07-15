@@ -49,6 +49,7 @@ const Modal: React.FC<ModalProps> = ({
                 bg-neutral-800
                 p-[25px]
                 focus:outline-none
+                text-white
             "
         >
           <Dialog.Title
