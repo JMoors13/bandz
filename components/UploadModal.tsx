@@ -30,12 +30,11 @@ const UploadModal = () => {
     },
   });
 
-  const handleFileSelect = (file: File | null) => {
-    if (file) {
-      console.log('Selected file:', file.name);
-      // You can now upload this file using Supabase, etc.
-    }
-  };
+  // const handleFileSelect = (file: File | null) => {
+  //   if (file) {
+  //     // You can now upload this file using Supabase, etc.
+  //   }
+  // };
 
   const onChange = (open: boolean) => {
     if (!open) {
@@ -68,7 +67,6 @@ const UploadModal = () => {
 
       if (songError) {
         setIsLoading(false);
-        console.log(songError);
         return toast.error('Failed song upload.');
       }
 

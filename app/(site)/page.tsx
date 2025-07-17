@@ -1,15 +1,13 @@
 import Header from '@/components/Header';
-import { useUser } from '@/hooks/useUser';
 import PageContent from './components/PageContents';
 import getSongs from '@/actions/getSongs';
-import WelcomeHeading from '@/components/UserGreeting';
 import UserGreeting from '@/components/UserGreeting';
 
 export const revalidate = 0;
 
 export default async function Page() {
   const songs = await getSongs();
-
+  console.log(songs);
   return (
     <>
       <Header>
