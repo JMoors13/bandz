@@ -31,15 +31,10 @@ const AuthModal = () => {
     setPassword('');
     setArtistName('');
     setListenerName('');
-    setSelectedRole('listeners');
-  }, [view]);
 
-  useEffect(() => {
-    setArtistName('');
-    setListenerName('');
-    setEmail('');
-    setPassword('');
-  }, [selectedRole]);
+    //Set default selection
+    setSelectedRole('listeners');
+  }, [view, selectedRole]);
 
   const onChange = (open: boolean) => {
     if (!open) onClose();

@@ -158,49 +158,54 @@ const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) => {
   });
 
   useEffect(() => {
-    if (!sound || !isPlaying) return;
+    if (!sound) return;
 
-    trackPlayFromZeroToEighty({
-      sound,
-      songId: song.id,
-      onValidPlay: () => recordPlay(song.id),
-      intervalRef,
-    });
+    // Auto-play and unload
+    sound.play();
 
+    const cleanup = () => {
+      sound.unload();
+      sound.off('load'); // remove any lingering events
+    };
+
+    // Duration check
     const checkDuration = () => {
       const loadedDuration = sound.duration();
       if (loadedDuration && loadedDuration > 0) {
         setDuration(loadedDuration);
       } else {
-        setTimeout(checkDuration, 200); // check again in 200ms
+        setTimeout(checkDuration, 200);
       }
     };
 
     checkDuration();
-  }, [sound, isPlaying]);
 
-  useEffect(() => {
-    sound?.play();
+    // Playback tracking
+    if (isPlaying) {
+      trackPlayFromZeroToEighty({
+        sound,
+        songId: song.id,
+        onValidPlay: () => recordPlay(song.id),
+        intervalRef,
+      });
+    }
 
-    return () => {
-      sound?.unload();
-    };
-  }, [sound]);
-
-  useEffect(() => {
-    if (!sound) return;
-
+    // Position update loop
+    let isMounted = true;
     const updatePosition = () => {
-      setPosition(sound.seek() || 0); // current position
-      requestAnimationFrame(updatePosition);
+      if (isMounted) {
+        setPosition(sound.seek() || 0);
+        requestAnimationFrame(updatePosition);
+      }
     };
 
     requestAnimationFrame(updatePosition);
 
     return () => {
-      sound.off('load');
+      isMounted = false;
+      cleanup();
     };
-  }, [sound]);
+  }, [sound, isPlaying]);
 
   const handlePlay = () => {
     if (!isPlaying) {
