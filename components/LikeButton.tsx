@@ -45,36 +45,33 @@ const LikeButton: React.FC<LikeButtonProps> = ({ songId }) => {
   const Icon = isLiked ? AiFillHeart : AiOutlineHeart;
 
   const handleLike = async () => {
-    if (!user) {
-      return authModal.onOpen();
-    }
-
-    if (isLiked) {
-      const { error } = await supabaseClient
-        .from('liked_songs')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('song_id', songId);
-
-      if (error) {
-        toast.error(error.message);
-      } else {
-        setIsLiked(false);
-      }
-    } else {
-      const { error } = await supabaseClient.from('liked_songs').insert({
-        song_id: songId,
-        user_id: user.id,
-      });
-
-      if (error) {
-        toast.error(error.message);
-      } else {
-        setIsLiked(true);
-        toast.success('Liked!');
-      }
-    }
-    router.refresh();
+    // if (!user) {
+    //   return authModal.onOpen();
+    // }
+    // if (isLiked) {
+    //   const { error } = await supabaseClient
+    //     .from('liked_songs')
+    //     .delete()
+    //     .eq('user_id', user.id)
+    //     .eq('song_id', songId);
+    //   if (error) {
+    //     toast.error(error.message);
+    //   } else {
+    //     setIsLiked(false);
+    //   }
+    // } else {
+    //   const { error } = await supabaseClient.from('liked_songs').insert({
+    //     song_id: songId,
+    //     user_id: user.id,
+    //   });
+    //   if (error) {
+    //     toast.error(error.message);
+    //   } else {
+    //     setIsLiked(true);
+    //     toast.success('Liked!');
+    //   }
+    // }
+    // router.refresh();
   };
 
   return (

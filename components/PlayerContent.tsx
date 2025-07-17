@@ -7,12 +7,15 @@ import { AiFillStepBackward, AiFillStepForward } from 'react-icons/ai';
 import { HiSpeakerWave, HiSpeakerXMark } from 'react-icons/hi2';
 import { useEffect, useState } from 'react';
 import useSound from 'use-sound';
+import { RefObject } from 'react';
+import { useRef } from 'react';
 
 import usePlayer from '@/hooks/usePlayer';
 
 import LikeButton from './LikeButton';
 import MediaItem from './MediaItem';
 import Slider from './Slider';
+import { useSessionContext } from '@supabase/auth-helpers-react';
 
 interface PlayerContentProps {
   song: Song;
@@ -23,12 +26,87 @@ const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) => {
   const player = usePlayer();
   const [volume, setVolume] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const { supabaseClient } = useSessionContext();
 
   const Icon = isPlaying ? BsPauseFill : BsPlayFill;
   const VolumeIcon = volume === 0 ? HiSpeakerXMark : HiSpeakerWave;
 
   const [duration, setDuration] = useState(0);
   const [position, setPosition] = useState(0);
+
+  const recordPlay = async (songId: string) => {
+    const { error } = await supabaseClient.from('song_plays').insert({
+      song_id: songId,
+    });
+
+    if (error) {
+      console.error('Error recording play:', error.message);
+    } else {
+      console.log('Recorded play for song:', songId);
+    }
+  };
+
+  const trackPlayFromZeroToEighty = ({
+    sound,
+    songId,
+    onValidPlay,
+    intervalRef,
+  }: {
+    sound: any;
+    songId: string;
+    onValidPlay: () => void;
+    intervalRef: RefObject<NodeJS.Timeout | null>;
+  }): void => {
+    let hasStartedFromZero = false;
+    let hasRecorded = false;
+    let previousSeek = 0;
+
+    if (!sound) return;
+
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    intervalRef.current = setInterval(() => {
+      const currentSeek = sound.seek?.() as number;
+      const duration = sound.duration?.() as number;
+
+      if (typeof currentSeek !== 'number' || !duration) return;
+
+      const progress = currentSeek / duration;
+      const scrubThreshold = 3; // seconds
+
+      // 🎬 Wait for start at 0:00
+      if (!hasStartedFromZero) {
+        if (currentSeek <= 2.0) {
+          hasStartedFromZero = true;
+          previousSeek = currentSeek;
+          console.log('▶️ Started from beginning.');
+        }
+
+        return;
+      }
+
+      // ❌ If user scrubs (jumps)
+      if (Math.abs(currentSeek - previousSeek) > scrubThreshold) {
+        console.log('⛔ Scrub detected. Resetting tracking.');
+        hasStartedFromZero = false;
+        hasRecorded = false;
+        previousSeek = 0;
+        return;
+      }
+
+      previousSeek = currentSeek;
+
+      // ✅ If reaches 80% and hasn't been recorded
+      if (!hasRecorded && progress >= 0.1) {
+        console.log('🎉 Reached 80% from start without skipping.');
+        onValidPlay();
+        hasRecorded = true;
+      }
+    }, 500);
+  };
 
   const onPlayNext = () => {
     if (player.ids.length === 0) {
@@ -68,22 +146,6 @@ const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) => {
     player.setId(previousSong);
   };
 
-  // const [play, { pause, sound }] = useSound(songUrl, {
-  //   volume: volume,
-  //   onplay: () => setIsPlaying(true),
-  //   onend: () => {
-  //     setIsPlaying(false);
-  //     onPlayNext();
-  //   },
-  //   onpause: () => setIsPlaying(false),
-  //   onload: () => {
-  //     if (sound) {
-  //       setDuration(sound.duration() || 0);
-  //     }
-  //   },
-  //   format: ['mp3'],
-  // });
-
   const [play, { pause, sound }] = useSound(songUrl, {
     volume,
     format: ['mp3'],
@@ -93,18 +155,17 @@ const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) => {
       onPlayNext();
     },
     onpause: () => setIsPlaying(false),
-    // onload: () => {
-    //   if (sound) {
-    //     const loadedDuration = sound.duration();
-    //     if (loadedDuration) {
-    //       setDuration(loadedDuration);
-    //     }
-    //   }
-    // },
   });
 
   useEffect(() => {
     if (!sound || !isPlaying) return;
+
+    trackPlayFromZeroToEighty({
+      sound,
+      songId: song.id,
+      onValidPlay: () => recordPlay(song.id),
+      intervalRef,
+    });
 
     const checkDuration = () => {
       const loadedDuration = sound.duration();
@@ -133,10 +194,6 @@ const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) => {
       setPosition(sound.seek() || 0); // current position
       requestAnimationFrame(updatePosition);
     };
-
-    // sound.on('load', () => {
-    //   setDuration(sound.duration() || 0);
-    // });
 
     requestAnimationFrame(updatePosition);
 

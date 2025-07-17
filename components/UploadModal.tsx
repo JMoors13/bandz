@@ -125,12 +125,17 @@ const UploadModal = () => {
           {...register('title', { required: true })}
           placeholder="Song title"
         />
-        <Input
-          id="artist"
-          disabled={isLoading}
-          {...register('artist', { required: true })}
-          placeholder="Artist"
-        />
+        <div
+          className="
+            flex
+            gap-y-1
+            text-neutral-300
+            
+          "
+        >
+          <span className="font-semibold">Artist Name:&nbsp; &nbsp;</span>
+          <span>{user?.email}</span>
+        </div>
         <FileInput
           id="song"
           label="Select a song"
