@@ -89,7 +89,10 @@ const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) => {
       }
 
       // ❌ If user scrubs (jumps)
-      if (Math.abs(currentSeek - previousSeek) > scrubThreshold) {
+      const jumpedBackToStart = previousSeek > 10 && currentSeek <= 1;
+      const jumped = Math.abs(currentSeek - previousSeek) > scrubThreshold;
+
+      if (jumped && !jumpedBackToStart) {
         console.log('⛔ Scrub detected. Resetting tracking.');
         hasStartedFromZero = false;
         hasRecorded = false;
@@ -158,54 +161,49 @@ const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) => {
   });
 
   useEffect(() => {
-    if (!sound) return;
+    if (!sound || !isPlaying) return;
 
-    // Auto-play and unload
-    sound.play();
+    trackPlayFromZeroToEighty({
+      sound,
+      songId: song.id,
+      onValidPlay: () => recordPlay(song.id),
+      intervalRef,
+    });
 
-    const cleanup = () => {
-      sound.unload();
-      sound.off('load'); // remove any lingering events
-    };
-
-    // Duration check
     const checkDuration = () => {
       const loadedDuration = sound.duration();
       if (loadedDuration && loadedDuration > 0) {
         setDuration(loadedDuration);
       } else {
-        setTimeout(checkDuration, 200);
+        setTimeout(checkDuration, 200); // check again in 200ms
       }
     };
 
     checkDuration();
+  }, [sound, isPlaying]);
 
-    // Playback tracking
-    if (isPlaying) {
-      trackPlayFromZeroToEighty({
-        sound,
-        songId: song.id,
-        onValidPlay: () => recordPlay(song.id),
-        intervalRef,
-      });
-    }
+  useEffect(() => {
+    sound?.play();
 
-    // Position update loop
-    let isMounted = true;
+    return () => {
+      sound?.unload();
+    };
+  }, [sound]);
+
+  useEffect(() => {
+    if (!sound) return;
+
     const updatePosition = () => {
-      if (isMounted) {
-        setPosition(sound.seek() || 0);
-        requestAnimationFrame(updatePosition);
-      }
+      setPosition(sound.seek() || 0); // current position
+      requestAnimationFrame(updatePosition);
     };
 
     requestAnimationFrame(updatePosition);
 
     return () => {
-      isMounted = false;
-      cleanup();
+      sound.off('load');
     };
-  }, [sound, isPlaying]);
+  }, [sound]);
 
   const handlePlay = () => {
     if (!isPlaying) {

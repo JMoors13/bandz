@@ -9,6 +9,7 @@ import ModalProvider from '@/providers/ModalProvider';
 import SupabaseProvider from '@/providers/SupabaseProvider';
 import ToasterProvider from '@/providers/ToasterProvider';
 import Player from '@/components/Player';
+import { AuthFormProvider } from '@/providers/AuthProvider';
 
 const font = Figtree({
   subsets: ['latin'],
@@ -25,9 +26,11 @@ export default function RootLayout({
         <ToasterProvider />
         <SupabaseProvider>
           <UserProvider>
-            <ModalProvider />
-            {children}
-            <Player />
+            <AuthFormProvider>
+              <ModalProvider />
+              {children}
+              <Player />
+            </AuthFormProvider>
           </UserProvider>
         </SupabaseProvider>
       </body>

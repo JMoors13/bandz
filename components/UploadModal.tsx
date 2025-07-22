@@ -1,7 +1,7 @@
 'use client';
 
 import uniqid from 'uniqid';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import useUploadModal from '@/hooks/useUploadModal';
 import { FieldValues, SubmitHandler, useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
@@ -13,18 +13,21 @@ import Modal from './Modal';
 import Input from './Input';
 import Button from './Button';
 import FileInput from './FileInput';
+// import useArtistProfile from '@/hooks/useGetArtistProfile';
 
 const UploadModal = () => {
   const [isLoading, setIsLoading] = useState(false);
   const uploadModal = useUploadModal();
   const { user } = useUser();
+  // const artistProfile = useArtistProfile();
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
-
+  // const [artistProfile, setArtistProfile] = useState('');
   const { register, handleSubmit, reset, setValue } = useForm<FieldValues>({
     defaultValues: {
       artist: '',
       title: '',
+      genre: '',
       song: null,
       image: null,
     },
@@ -111,6 +114,33 @@ const UploadModal = () => {
     }
   };
 
+  // useEffect(() => {
+  //   if (artistProfile?.artist_name) {
+  //     setValue('artist', artistProfile.artist_name);
+  //   }
+  // }, [artistProfile, setValue]);
+
+  // useEffect(() => {
+  //   if (!user) return;
+
+  //   const fetchArtist = async () => {
+  //     const { data, error } = await supabaseClient
+  //       .from('artists')
+  //       .select('*')
+  //       .eq('id', user.id)
+  //       .single();
+
+  //     if (error) {
+  //       console.error(error);
+  //     } else {
+  //       setArtistProfile(data);
+  //       console.log(artistProfile);
+  //     }
+  //   };
+
+  //   fetchArtist();
+  // }, [user]);
+
   return (
     <Modal
       title="Add a song"
@@ -119,26 +149,57 @@ const UploadModal = () => {
       onChange={onChange}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-y-4">
+        Song Title
         <Input
           id="title"
           disabled={isLoading}
           {...register('title', { required: true })}
-          placeholder="Song title"
+          placeholder="Enter song name here"
         />
         <div
           className="
             flex
             gap-y-1
-            text-neutral-300
-            
-          "
+            text-neutral-300"
         >
-          <span className="font-semibold">Artist Name:&nbsp; &nbsp;</span>
-          <span>{user?.email}</span>
+          <label
+            className="
+              font-semibold"
+          >
+            Artist Name: &nbsp;
+          </label>
+          {/* <span>{artistProfile?.artist_name}</span> */}
+          <input type="hidden" {...register('artist', { required: true })} />
+        </div>
+        <div className="flex flex-col gap-y-1">
+          <label
+            htmlFor="genre"
+            className="text-sm font-semibold text-neutral-300"
+          >
+            Genre
+          </label>
+          <select
+            id="genre"
+            disabled={isLoading}
+            {...register('genre', { required: true })}
+            className="bg-neutral-800 text-white border border-neutral-600 rounded-md px-3 py-2 text-sm"
+          >
+            <option value="">Select a genre</option>
+            <option value="rock">Rock</option>
+            <option value="pop">Pop</option>
+            <option value="hiphop">Hip-Hop</option>
+            <option value="electronic">Electronic</option>
+            <option value="jazz">Jazz</option>
+            <option value="classical">Classical</option>
+            <option value="country">Country</option>
+            <option value="metal">Metal</option>
+            <option value="folk">Folk</option>
+            <option value="other">Other</option>
+          </select>
         </div>
         <FileInput
           id="song"
-          label="Select a song"
+          label="Select a song file"
           accept="audio/*"
           onChange={(e) => {
             // Update form manually
@@ -153,7 +214,6 @@ const UploadModal = () => {
             setValue('image', e.target.files);
           }}
         />
-
         <Button className="cursor-pointer" disabled={isLoading} type="submit">
           Upload
         </Button>

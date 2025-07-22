@@ -1,40 +1,55 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  useSessionContext,
-  useSupabaseClient,
-} from '@supabase/auth-helpers-react';
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
-import useAuthModal from '@/hooks/useAuthModal';
 import Modal from './Modal';
+import { useAuthModal } from '@/providers/AuthProvider';
+import useAuthForm from '@/hooks/useAuthForm';
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 const AuthModal = () => {
   const supabase = useSupabaseClient();
   const router = useRouter();
-  const { session } = useSessionContext();
-  const { isOpen, onClose, view } = useAuthModal();
+  const {
+    artistName,
+    setArtistName,
+    listenerName,
+    setListenerName,
+    email,
+    setEmail,
+    password,
+    setPassword,
+  } = useAuthModal();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { isOpen, onClose, view } = useAuthForm();
+
+  // const [email, setEmail] = useState('');
+  // const [password, setPassword] = useState('');
   const [selectedRole, setSelectedRole] = useState<'artists' | 'listeners'>(
     'listeners',
   );
-  const [artistName, setArtistName] = useState('');
-  const [listenerName, setListenerName] = useState('');
-  const [loading, setLoading] = useState(false);
+  // const [artistName, setArtistName] = useState('');
+  // const [listenerName, setListenerName] = useState('');
 
-  useEffect(() => {
-    setEmail('');
-    setPassword('');
-    setArtistName('');
-    setListenerName('');
+  // useEffect(() => {
+  //   if (!isOpen) {
+  //     return;
+  //   }
 
-    //Set default selection
-    setSelectedRole('listeners');
-  }, [view, selectedRole]);
+  //   setEmail('');
+  //   setPassword('');
+  //   setArtistName('');
+  //   setListenerName('');
+
+  //   // Set default role when modal is opened
+  //   setSelectedRole('listeners');
+  // }, [isOpen, view]);
 
   const onChange = (open: boolean) => {
     if (!open) onClose();
@@ -48,67 +63,67 @@ const AuthModal = () => {
       return;
     }
 
-    setLoading(true);
-
     if (view === 'sign_in') {
+      // ✅ Only sign in – doesn't create an account
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+
       if (error) {
         toast.error(error.message);
-      } else {
-        toast.success('Logged in!');
-        router.refresh();
-        onClose();
-      }
-    } else {
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error || !data.user) {
-        toast.error(error?.message || 'Sign-up failed.');
-        setLoading(false);
         return;
       }
-
-      // Insert profile only if signup was successful
-      const profile = {
-        id: data.user.id,
-        email,
-        role: selectedRole,
-      };
-
-      const { error: profileError } = await supabase
-        .from('public_profiles')
-        .insert([profile]);
-
-      if (profileError) {
-        console.error('Profile insert failed:', profileError.message);
-        toast.error('Failed to save profile.');
-      } else {
-      }
-
-      // Insert into either artist or listener table
-      const table = selectedRole === 'artists' ? 'artists' : 'listeners';
-      const roleInsertData =
-        selectedRole === 'artists'
-          ? { id: data.user.id, artist_name: artistName }
-          : { id: data.user.id, display_name: listenerName };
-
-      const { error: roleError } = await supabase
-        .from(table)
-        .insert([roleInsertData]);
-
-      if (roleError) {
-        console.error(`Insert failed in ${table} table:`, roleError.message);
-        toast.error(`Failed to register in ${table} table.`);
-        setLoading(false);
-        return;
-      }
-      toast.success('Account created! Check your email.');
+      // await sleep(1000); // Adjust to 1000ms if needed
+      // console.log('Waited for DB propagation');
+      toast.success('Logged in!');
+      router.refresh();
       onClose();
+      return;
     }
 
-    setLoading(false);
+    // ✅ Sign-up flow
+    const { data, error } = await supabase.auth.signUp({ email, password });
+
+    if (error || !data.user) {
+      toast.error(error?.message || 'Sign-up failed.');
+      return;
+    }
+
+    // Insert into public_profiles
+    const { error: profileError } = await supabase
+      .from('public_profiles')
+      .insert([{ id: data.user.id, email, role: selectedRole }]);
+
+    if (profileError) {
+      console.error('Profile insert failed:', profileError.message);
+      toast.error('Failed to save profile.');
+      return;
+    }
+
+    // Insert into artists or listeners table
+    const table = selectedRole === 'artists' ? 'artists' : 'listeners';
+    const roleInsertData =
+      selectedRole === 'artists'
+        ? { id: data.user.id, artist_name: artistName }
+        : { id: data.user.id, display_name: listenerName };
+
+    const { error: roleError } = await supabase
+      .from(table)
+      .insert([roleInsertData]);
+
+    if (roleError) {
+      console.error(`Insert failed in ${table} table:`, roleError.message);
+      toast.error(`Failed to register in ${table} table.`);
+      return;
+    }
+
+    // ✅ Optional wait to allow database state to settle (e.g., auth provider fetching artist name)
+    await new Promise((res) => setTimeout(res, 500));
+
+    toast.success('Account created! Check your email.');
+    onClose();
+    router.refresh(); // Refresh to load data that depends on the new session
   };
 
   return (
@@ -185,14 +200,9 @@ const AuthModal = () => {
 
         <button
           type="submit"
-          disabled={loading}
           className="cursor-pointer w-full py-2 rounded bg-blue-700 text-white hover:bg-blue-900"
         >
-          {loading
-            ? 'Processing...'
-            : view === 'sign_in'
-            ? 'Log In'
-            : 'Sign Up'}
+          {view === 'sign_in' ? 'Log In' : 'Sign Up'}
         </button>
       </form>
 
@@ -203,7 +213,7 @@ const AuthModal = () => {
             <button
               type="button"
               className="cursor-pointer text-blue-700 underline hover:text-blue-700 "
-              onClick={() => useAuthModal.getState().setView('sign_up')}
+              onClick={() => useAuthForm.getState().setView('sign_up')}
             >
               Sign up.
             </button>
@@ -214,7 +224,7 @@ const AuthModal = () => {
             <button
               type="button"
               className="text-blue-700 cursor-pointer underline hover:text-blue-700"
-              onClick={() => useAuthModal.getState().setView('sign_in')}
+              onClick={() => useAuthForm.getState().setView('sign_in')}
             >
               Log in.
             </button>

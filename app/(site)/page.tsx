@@ -1,28 +1,22 @@
-import Header from '@/components/Header';
-import PageContent from './components/PageContents';
+// import Header from '@/components/Header';
+// import PageContent from './components/PageContents';
 import getSongs from '@/actions/getSongs';
-import UserGreeting from '@/components/UserGreeting';
+// import { useSupabaseClient } from '@supabase/auth-helpers-react';
+// import { useRouter } from 'next/navigation';
+// import toast from 'react-hot-toast';
+import ClientPage from './components/ClientPage';
 
 export const revalidate = 0;
 
 export default async function Page() {
   const songs = await getSongs();
-  console.log(songs);
+
+  // You'll need to move this logic into a client-side component!
+  // This file is marked as `async`, so we can't use hooks here directly.
+
   return (
     <>
-      <Header>
-        <UserGreeting />
-      </Header>
-      <div className="mt-2 mb-7 px-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-white text-2xl font-semibold">Newest Songs</h1>
-        </div>
-        <div>
-          <div>
-            <PageContent songs={songs} />
-          </div>
-        </div>
-      </div>
+      <ClientPage songs={songs} />
     </>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import useAuthModal from '@/hooks/useAuthModal';
+import useAuthModal from '@/hooks/useAuthForm';
 import { useUser } from '@/hooks/useUser';
 
 import { useSessionContext } from '@supabase/auth-helpers-react';
@@ -22,25 +22,25 @@ const LikeButton: React.FC<LikeButtonProps> = ({ songId }) => {
 
   const [isLiked, setIsLiked] = useState(false);
 
-  useEffect(() => {
-    if (!user?.id) {
-      return;
-    }
+  // useEffect(() => {
+  //   if (!user?.id) {
+  //     return;
+  //   }
 
-    const fetchData = async () => {
-      const { data, error } = await supabaseClient
-        .from('liked_songs')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('song_id', songId)
-        .single();
+  //   const fetchData = async () => {
+  //     const { data, error } = await supabaseClient
+  //       .from('liked_songs')
+  //       .select('*')
+  //       .eq('user_id', user.id)
+  //       .eq('song_id', songId)
+  //       .single();
 
-      if (!error && data) {
-        setIsLiked(true);
-      }
-    };
-    fetchData();
-  }, [songId, supabaseClient, user?.id]);
+  //     if (!error && data) {
+  //       setIsLiked(true);
+  //     }
+  //   };
+  //   fetchData();
+  // }, [songId, supabaseClient, user?.id]);
 
   const Icon = isLiked ? AiFillHeart : AiOutlineHeart;
 

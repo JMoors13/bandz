@@ -1,6 +1,6 @@
 import { Song } from '@/types';
 
-import useAuthModal from './useAuthModal';
+import useAuthModal from './useAuthForm';
 import usePlayer from './usePlayer';
 import { useUser } from './useUser';
 

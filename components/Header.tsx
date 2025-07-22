@@ -1,71 +1,82 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { BiSearch } from 'react-icons/bi';
+// import { BiSearch } from 'react-icons/bi';
 import { HiHome } from 'react-icons/hi';
-import { RxCaretLeft, RxCaretRight } from 'react-icons/rx';
+// import { RxCaretLeft, RxCaretRight } from 'react-icons/rx';
 import { twMerge } from 'tailwind-merge';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { FaUserAlt } from 'react-icons/fa';
-import toast from 'react-hot-toast';
+// import toast from 'react-hot-toast';
 
-import useAuthModal from '@/hooks/useAuthModal';
 import { useUser } from '@/hooks/useUser';
 
 import Button from './Button';
 import useUploadModal from '@/hooks/useUploadModal';
 import { useEffect, useState } from 'react';
+import { useAuthModal } from '@/providers/AuthProvider';
+import useAuthForm from '@/hooks/useAuthForm';
 
 interface HeaderProps {
-  children: React.ReactNode;
   className?: string;
+  onLogout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ children, className }) => {
+const Header: React.FC<HeaderProps> = ({ className, onLogout }) => {
+  // const { artistName, setEmail, setPassword, setArtistName, setListenerName } =
+  //   useAuthModal();
+
+  const { artistName, version } = useAuthModal();
   const router = useRouter();
   const authModal = useAuthModal();
   const uploadModal = useUploadModal();
   const { user } = useUser();
   const supabaseClient = useSupabaseClient();
   const [isArtist, setIsArtist] = useState(false);
+  const { onOpen } = useAuthForm();
 
   useEffect(() => {
-    const fetchRole = async () => {
-      if (!user) return;
+    if (!user) return;
+
+    let attempts = 0;
+    const maxAttempts = 10; // Try for 5 seconds (10 * 500ms)
+    // console.log('polling');
+    const pollProfile = async () => {
       const { data, error } = await supabaseClient
         .from('public_profiles')
         .select('role')
         .eq('id', user.id)
         .single();
 
-      if (error) {
-        console.error('Error fetching role:', error.message);
-        return;
+      if (data) {
+        setIsArtist(data.role === 'artists');
+        // console.log(data.role);
+        return; // ✅ Success — stop polling
       }
 
-      setIsArtist(data?.role === 'artists');
+      if (attempts < maxAttempts) {
+        attempts++;
+        setTimeout(pollProfile, 500); // retry in 500ms
+      } else {
+        console.error(
+          '❌ Failed to fetch role after several attempts:',
+          error?.message,
+        );
+      }
     };
 
-    fetchRole();
+    pollProfile();
   }, [user, supabaseClient]);
+
+  useEffect(() => {
+    console.log('[Header] artistName or version changed:', artistName, version);
+  }, [artistName, version]);
 
   const onClick = () => {
     if (!user) {
-      return authModal.onOpen();
+      return onOpen();
     }
     return uploadModal.onOpen();
-  };
-
-  const handleLogout = async () => {
-    const { error } = await supabaseClient.auth.signOut();
-    // TODO: Reset any playing songs
-    router.refresh();
-
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success('Logged out!');
-    }
   };
 
   return (
@@ -80,6 +91,15 @@ const Header: React.FC<HeaderProps> = ({ children, className }) => {
         className,
       )}
     >
+      <div
+        className="
+        px-6
+        py-4
+      "
+      >
+        {user ? 'Welcome ' + artistName + '!' : 'Hey There!'}
+      </div>
+
       <div
         className="
         w-full
@@ -140,11 +160,15 @@ const Header: React.FC<HeaderProps> = ({ children, className }) => {
           items-center
           gap-x-4
           ml-auto
+          -mt-24
           "
         >
           {user ? (
             <div className=" flex gap-x-4 items-center ">
-              <Button onClick={handleLogout} className="bg-white px-6 py-2">
+              <Button
+                onClick={onLogout}
+                className="bg-white px-6 py-2 cursor-pointer"
+              >
                 Logout
               </Button>
               <Button
@@ -158,7 +182,7 @@ const Header: React.FC<HeaderProps> = ({ children, className }) => {
             <>
               <div>
                 <Button
-                  onClick={() => authModal.onOpen('sign_up')}
+                  onClick={() => onOpen('sign_up')}
                   className="
                     bg-white
                     text-black
@@ -172,7 +196,7 @@ const Header: React.FC<HeaderProps> = ({ children, className }) => {
               </div>
               <div>
                 <Button
-                  onClick={() => authModal.onOpen('sign_in')}
+                  onClick={() => onOpen('sign_in')}
                   className="
                     bg-white
                     text-black
@@ -188,7 +212,7 @@ const Header: React.FC<HeaderProps> = ({ children, className }) => {
           )}
         </div>
       </div>
-      {children}
+      {/* {children} */}
     </div>
   );
 };
