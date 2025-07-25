@@ -26,7 +26,7 @@ const Header: React.FC<HeaderProps> = ({ className, onLogout }) => {
   // const { artistName, setEmail, setPassword, setArtistName, setListenerName } =
   //   useAuthModal();
 
-  const { artistName, version } = useAuthModal();
+  const { artistName } = useAuthModal();
   const router = useRouter();
   const authModal = useAuthModal();
   const uploadModal = useUploadModal();
@@ -69,8 +69,8 @@ const Header: React.FC<HeaderProps> = ({ className, onLogout }) => {
   }, [user, supabaseClient]);
 
   useEffect(() => {
-    console.log('[Header] artistName or version changed:', artistName, version);
-  }, [artistName, version]);
+    console.log('[Header] artistName changed:', artistName);
+  }, [artistName]);
 
   const onClick = () => {
     if (!user) {

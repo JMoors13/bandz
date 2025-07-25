@@ -13,13 +13,14 @@ import Modal from './Modal';
 import Input from './Input';
 import Button from './Button';
 import FileInput from './FileInput';
+import { useAuthModal } from '@/providers/AuthProvider';
 // import useArtistProfile from '@/hooks/useGetArtistProfile';
 
 const UploadModal = () => {
   const [isLoading, setIsLoading] = useState(false);
   const uploadModal = useUploadModal();
   const { user } = useUser();
-  // const artistProfile = useArtistProfile();
+  const { artistName } = useAuthModal();
   const supabaseClient = useSupabaseClient();
   const router = useRouter();
   // const [artistProfile, setArtistProfile] = useState('');
@@ -33,11 +34,11 @@ const UploadModal = () => {
     },
   });
 
-  // const handleFileSelect = (file: File | null) => {
-  //   if (file) {
-  //     // You can now upload this file using Supabase, etc.
-  //   }
-  // };
+  useEffect(() => {
+    if (artistName) {
+      setValue('artist', artistName); // This is key!
+    }
+  }, [artistName, setValue]);
 
   const onChange = (open: boolean) => {
     if (!open) {
@@ -168,8 +169,12 @@ const UploadModal = () => {
           >
             Artist Name: &nbsp;
           </label>
-          {/* <span>{artistProfile?.artist_name}</span> */}
-          <input type="hidden" {...register('artist', { required: true })} />
+          <span>{artistName}</span>
+          <input
+            type="hidden"
+            value={artistName}
+            {...register('artist', { required: true })}
+          />
         </div>
         <div className="flex flex-col gap-y-1">
           <label

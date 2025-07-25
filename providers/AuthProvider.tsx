@@ -19,7 +19,10 @@ interface AuthFormContextType {
   setArtistName: (val: string) => void;
   listenerName: string;
   setListenerName: (val: string) => void;
-  version: number;
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 const AuthFormContext = createContext<AuthFormContextType | undefined>(
@@ -45,6 +48,9 @@ export const AuthFormProvider = ({ children }: { children: ReactNode }) => {
     const fetchArtistName = async () => {
       console.log('[AuthProvider] Fetching artist name for user:', user.id);
 
+      // Wait for database creation of new account before retrieval
+      await sleep(500);
+
       const { data, error } = await supabaseClient
         .from('artists')
         .select('artist_name')
@@ -58,7 +64,9 @@ export const AuthFormProvider = ({ children }: { children: ReactNode }) => {
 
       if (data?.artist_name) {
         console.log('[AuthProvider] Fetched artist name:', data.artist_name);
-        setArtistName(data.artist_name);
+        const formattedName =
+          data.artist_name.charAt(0).toUpperCase() + data.artist_name.slice(1);
+        setArtistName(formattedName);
         setVersion((prev) => prev + 1); // ✅ Trigger context update
       }
     };
@@ -77,9 +85,8 @@ export const AuthFormProvider = ({ children }: { children: ReactNode }) => {
       setArtistName,
       listenerName,
       setListenerName,
-      version, // ✅ expose version
     }),
-    [email, password, artistName, listenerName, version], // ✅ include version
+    [email, password, artistName, listenerName],
   );
 
   return (
