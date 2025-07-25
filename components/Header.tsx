@@ -7,7 +7,7 @@ import { HiHome } from 'react-icons/hi';
 import { twMerge } from 'tailwind-merge';
 import { useSupabaseClient } from '@supabase/auth-helpers-react';
 import { FaUserAlt } from 'react-icons/fa';
-// import toast from 'react-hot-toast';
+import { usePathname } from 'next/navigation';
 
 import { useUser } from '@/hooks/useUser';
 
@@ -23,8 +23,8 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ className, onLogout }) => {
-  // const { artistName, setEmail, setPassword, setArtistName, setListenerName } =
-  //   useAuthModal();
+  const pathname = usePathname();
+  const isAccountPage = pathname === '/account';
 
   const { artistName } = useAuthModal();
   const router = useRouter();
@@ -93,24 +93,31 @@ const Header: React.FC<HeaderProps> = ({ className, onLogout }) => {
     >
       <div
         className="
-        px-6
-        py-4
-      "
-      >
-        {user ? 'Welcome ' + artistName + '!' : 'Hey There!'}
-      </div>
-
-      <div
-        className="
         w-full
         mb-4
         flex
         items-center
         justify-between
+        gap-x-4
         "
       >
+        <button
+          onClick={() => router.push('/')}
+          className="
+            rounded-full
+            p-2
+            bg-white
+            flex
+            items-center
+            justify-center
+            hover:opacity-75
+            transition
+            "
+        >
+          <HiHome className="text-black" size={20} />
+        </button>
         <div>
-          {isArtist && user ? (
+          {isArtist && user && !isAccountPage ? (
             <>
               {' '}
               <Button
@@ -126,33 +133,33 @@ const Header: React.FC<HeaderProps> = ({ className, onLogout }) => {
               </Button>
             </>
           ) : (
-            <></>
+            <div
+              className="
+                px-6
+                py-2
+              "
+            ></div>
           )}
         </div>
-        <div
+        {!isAccountPage && (
+          <div
+            className="
+            px-6
+            py-4
+          "
+          >
+            {user ? 'Welcome ' + artistName + '!' : 'Hey There!'}
+          </div>
+        )}
+        {/* <div
           className="
             flex
             md:hidden
             gap-x-2
             items-center
           "
-        >
-          <button
-            onClick={() => router.push('/')}
-            className="
-            rounded-full
-            p-2
-            bg-white
-            flex
-            items-center
-            justify-center
-            hover:opacity-75
-            transition
-            "
-          >
-            <HiHome className="text-black" size={20} />
-          </button>
-        </div>
+        > */}
+        {/* </div> */}
         <div
           className="
           flex
@@ -160,7 +167,6 @@ const Header: React.FC<HeaderProps> = ({ className, onLogout }) => {
           items-center
           gap-x-4
           ml-auto
-          -mt-24
           "
         >
           {user ? (
@@ -172,7 +178,7 @@ const Header: React.FC<HeaderProps> = ({ className, onLogout }) => {
                 Logout
               </Button>
               <Button
-                // onClick={() => router.push('/account')}
+                onClick={() => router.push('/account')}
                 className="bg-white"
               >
                 <FaUserAlt />
