@@ -101,7 +101,7 @@ const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) => {
       }
 
       previousSeek = currentSeek;
-
+      //TODO fix song_plays table updating correctly
       // ✅ If reaches 80% and hasn't been recorded
       if (!hasRecorded && progress >= 0.1) {
         console.log('🎉 Reached 80% from start without skipping.');
