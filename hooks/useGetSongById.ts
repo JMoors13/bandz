@@ -8,7 +8,7 @@ const useGetSongById = (id?: string) => {
     const [isLoading, setIsLoading] = useState(false);
     const [song, setSong] = useState<Song | undefined>(undefined);
     const { supabaseClient } = useSessionContext();
-
+    console.log(id)
     useEffect(() => {
         if (!id) {
             return;
@@ -20,7 +20,7 @@ const useGetSongById = (id?: string) => {
             const { data, error } = await supabaseClient
             .from('songs')
             .select('*')
-            .eq('id', id)
+            .eq('song_id', id)
             .single();
 
         if (error) {

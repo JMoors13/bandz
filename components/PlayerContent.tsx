@@ -36,15 +36,10 @@ const PlayerContent: React.FC<PlayerContentProps> = ({ song, songUrl }) => {
   const [position, setPosition] = useState(0);
 
   const recordPlay = async (songId: string) => {
-    const { error } = await supabaseClient.from('song_plays').insert({
-      song_id: songId,
+    const { error } = await supabaseClient.rpc('increment_play_count', {
+      p_song_id: songId,
     });
-
-    if (error) {
-      console.error('Error recording play:', error.message);
-    } else {
-      console.log('Recorded play for song:', songId);
-    }
+    if (error) console.error(error);
   };
 
   const trackPlayFromZeroToEighty = ({
